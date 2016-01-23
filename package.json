@@ -1,0 +1,14 @@
+{
+  "name": "complimentron",
+  "version": "1.0.1",
+  "description": "compliment generator",
+  "main": "generator.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Coleman Collins",
+  "license": "ISC",
+  "dependencies": {
+    "sentencer": "^0.1.5"
+  }
+}
