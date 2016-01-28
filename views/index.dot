@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta name="viewport" content="width=device-width">
+    <link rel="stylesheet" href="main.css">
+    <title>[[= model.test ]]</title>
+  </head>
+  <body>
+    <div class="receipt-wrapper">
+      <div class="header">
+        <p class="count">Compliment no. [[= model.count ]]</p>
+        <p class="date">[[= model.date ]]</p>
+      </div>
+      <div class="compliment-content">
+        <h1 class="compliment-text">
+          [[= model.compliment ]]
+        </h1>
+      </div>
+      <div class="footer">
+        <p class="complimentron-info">This compliment was printed just for you by Complimentron v1.01.</p>
+        <p class="thank-you">Thank you for being complimented.</p>
+      </div>
+    </div>
+  </body>
+</html>
