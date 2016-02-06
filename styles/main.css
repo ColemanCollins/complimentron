@@ -5,20 +5,21 @@ body {
 }
 
 .receipt-wrapper {
-  width: 395px;
-  height: 500px;
+  width: 648px;
+  height: 880px;
   margin: 0 auto;
   /*border: 1px solid #000;*/
   /*margin-top: 50px;*/
 }
 
 .header {
-  width: 324px;
-  margin: 25px auto 0 auto;
-  font-size: 11px;
-  border-bottom: 4px solid #000;
+  width: 648px;
+  margin: 10px auto 0 auto;
+  font-size: 22px;
+  border-bottom: 7px solid #000;
   text-align: right;
   overflow: auto;
+  -webkit-font-smoothing: none !important;
 }
 
 .count {
@@ -29,23 +30,23 @@ body {
 }
 
 .compliment-content {
-  width: 324px;
-  height: 320px;
+  width: 648px;
+  height: 640px;
   margin: 0 auto;
 }
 .compliment-text {
-  margin-top: 12px;
-  font-size: 29px;
-  line-height: 37px;
+  margin-top: 24px;
+  font-size: 58px;
+  line-height: 64px;
 }
 
 .footer {
-  width: 324px;
+  width: 648px;
   margin: 0 auto;
-  font-size: 11px;
-  line-height: 13px;
-  border-top: 2px solid #000;
-  padding-top: 4px;
+  font-size: 22px;
+  line-height: 26px;
+  border-top: 3px solid #000;
+  padding-top: 8px;
 }
 .footer p {
   margin-top: .8em;

@@ -1,11 +1,19 @@
 var Sentencer = require('sentencer');
 var utils = require('./utilities');
-var weightedComplimentList = [];
 var express = require('express');
 var app = express();
 var engine = require('express-dot-engine');
 var path = require('path');
 var moment = require('moment');
+var webshot = require('webshot');
+
+// configure webshot
+var webshotOptions =   {
+  screenSize: { width: 335*2, height:   440*2}, 
+  shotSize: { width: 335*2, height: 440*2 }, 
+  userAgent: 'Mozilla/5.0 (iPhone; U; CPU iPhone OS 3_2 like Mac OS X; en-us)'
+  + ' AppleWebKit/531.21.20 (KHTML, like Gecko) Mobile/7B298g'
+};
 
 // configure the server
 app.engine('dot', engine.__express);
@@ -13,8 +21,7 @@ app.set('views', path.join(__dirname, './views'));
 app.set('view engine', 'dot');
 
 
-//sentence generator part of the bizniss
-
+//sentence generator part of the stuff
 Sentencer.configure({
   nounList: [],
   adjectiveList: [],
@@ -43,23 +50,30 @@ Sentencer.configure({
   }
 });
 
-    //compliments                                            // weights
+//'weight': 
+//compliment,
 var complimentList = {
-  '{{ capitalized_exclamation }}, you are {{ positive_adjective }}!' : 10,
-  'You are the {{ superlative }} person in {{ location }}.'          : 10,
-  'DAYUM.'                                                           : 1,
-  '<3'                                                               : 1,
-  'There is a person getting through a hard time right now because you\'re a good friend.' : 1
+  '{{ capitalized_exclamation }}, you are {{ positive_adjective }}!':
+  10,
+
+  'You are the {{ superlative }} person in {{ location }}.':
+  10,
+
+  'DAYUM.':
+  1,
+
+  '<3':
+  1,
+
+  'There is a person getting through a hard time right now because you\'re a good friend.':
+  3
 };
 
 var generateWeightedComplimentList = function() {
   for (var compliment in complimentList) {
     if (complimentList.hasOwnProperty(compliment)) {
-
       //for each weight, push that many instances of the string into the weighted list
-      for (var i = 0; i < complimentList[compliment]; i++) {weightedComplimentList.push(compliment);
-      }
-
+      for (var i = 0; i < complimentList[compliment]; i++) {weightedComplimentList.push(compliment);}
     };
   };
 }
@@ -69,8 +83,9 @@ var createCompliment = function() {
 };
 
 //generate the compliment list
+var weightedComplimentList = [];
 generateWeightedComplimentList();
-
+console.log(weightedComplimentList);
 //counter stuff
 var padWithZeros = function(num, size) {
     var s = "00000000" + num;
@@ -84,9 +99,17 @@ app.get('/', function (req, res) {
   res.render('index', {compliment: createCompliment(), count: padWithZeros(complimentCounter), date: moment().format('L')} );
   complimentCounter++;
 });
+
+app.get('/photo/', function (req, res) {
+  res.sendFile(__dirname + '/compliment.png');
+  webshot('http://localhost:3000', 'compliment.png', webshotOptions, function(err) {
+  });
+  // need some sort of callback or ready function because right now if you press the button again too soon it throws
+  // an error because it hasn't finished getting a screenshot of the next one
+});
+
 //serve the css
 app.use(express.static('styles'));
-
-app.listen(3000, function() {
+app.listen(3000, function() { 
   console.log('complimentron is running');
 });
