@@ -1,91 +1,29 @@
-var Sentencer = require('sentencer');
-var exec = require('child_process').exec;
-var express = require('express');
-var app = express();
-var engine = require('express-dot-engine');
-var path = require('path');
-var moment = require('moment');
-var webshot = require('webshot');
-var Jimp = require('jimp');
-var getPixels = require('get-pixels');
-var escpos = require('escposify');
-var device = new escpos.USB(0x0485, 0x7541);
-var printer = new escpos.Printer(device);
-var Gpio = require('onoff').Gpio;
-var button = new Gpio(18, 'in', 'both');
-var led = new Gpio(17, 'out');
+var moment = require('moment')
+  , getPixels = require('get-pixels')
+  , path = require('path')
+  , complimentList = require('./compliments')
+
+  , Canvas = require('canvas')
+  , Image = Canvas.Image
+  , canvas = new Canvas(586, 770)
+  , Font = Canvas.Font
+  , ctx = canvas.getContext('2d')
+
+  , Gpio = require('onoff').Gpio
+  , button = new Gpio(18, 'in', 'both')
+  , led = new Gpio(17, 'out')
+
+  , escpos = require('escposify')
+  , device = new escpos.USB(0x0485, 0x7541)
+  , printer = new escpos.Printer(device)
+  , allowedToPrint = true;
+
 device.open();
+led.writeSync(1);
 
-// configure webshot
-var webshotOptions =   {
-  screenSize: { width: 335*2, height:   440*2}, 
-  shotSize: { width: 335*2, height: 440*2 }, 
-  userAgent: 'Mozilla/5.0 (iPhone; U; CPU iPhone OS 3_2 like Mac OS X; en-us)'
-  + ' AppleWebKit/531.21.20 (KHTML, like Gecko) Mobile/7B298g'
-};
+function fontFile(name) { return path.join(__dirname, name); };
+chicago = new Font('Chicago', fontFile('chicago.ttf'));
 
-// configure the server
-app.engine('dot', engine.__express);
-app.set('views', path.join(__dirname, './views'));
-app.set('view engine', 'dot');
-
-// functions for word stuff
-var capitalizeFirstLetter = function(string) {
-    return string.charAt(0).toUpperCase() + string.slice(1);
-}
-
-var randomFromArray = function(array) {
-  return array[Math.floor(Math.random() * array.length)];
-}
-
-
-//sentence generator part of the stuff
-Sentencer.configure({
-  nounList: [],
-  adjectiveList: [],
-  actions: {
-    capitalized_exclamation: function(){
-      var exclamationList = ['wow'];
-      var exclamation = randomFromArray(exclamationList);
-      return capitalizeFirstLetter(exclamation);
-    },
-    exclamation: function(){
-      var exclamationList = ['wow'];
-      return randomFromArray(exclamationList);
-    },
-    location: function(){
-     var locationList = ['Chicago', 'Illinois', 'the Midwest', 'the whole fuckin\' world'];
-     return randomFromArray(locationList);
-    },
-    positive_adjective: function() {
-     var positiveAdjectiveList = ['amazing','delightful','a breath of fresh air','something special'];
-     return randomFromArray(positiveAdjectiveList);
-    },
-    superlative: function(){
-      var superlativeList = ['coolest','neatest','most fun','most excellently rad'];
-      return randomFromArray(superlativeList);
-    }
-  }
-});
-
-//'weight': 
-//compliment,
-var complimentList = {
-  '{{ capitalized_exclamation }}, you are {{ positive_adjective }}!':
-  10,
-
-  'You are the {{ superlative }} person in {{ location }}.':
-  10,
-
-  'DAYUM.':
-  1,
-
-  '<3':
-  1,
-
-  'There is a person getting through a hard time right now because you\'re a good friend.':
-  3
-};
 
 var generateWeightedComplimentList = function() {
   for (var compliment in complimentList) {
@@ -96,13 +34,17 @@ var generateWeightedComplimentList = function() {
   };
 }
 
-var createCompliment = function() {
-  return Sentencer.make(randomFromArray(weightedComplimentList));
+var createCompliment = function(template) {
+  var sentence = template;
+  var occurrences = template.match(/\{\{(.+?)\}\}/g);
+  if (occurrences) {
+     for (var i = occurrences.length - 1 ; i >= 0; i--) {
+      var result = randomFromArray( occurrences[i].replace(/[\{\}]/g, '').trim().split(',') ).trim();
+      sentence = sentence.replace(occurrences[i], result);
+     }
+  }
+   return sentence;
 };
-
-//generate the compliment list
-var weightedComplimentList = [];
-generateWeightedComplimentList();
 
 //counter stuff
 var padWithZeros = function(num, size) {
@@ -112,58 +54,99 @@ var padWithZeros = function(num, size) {
 var complimentCounter = 1;
 
 
-// a route to show the compliments to webshot
-app.get('/', function (req, res) {
-  res.render('index', {compliment: createCompliment(), count: padWithZeros(complimentCounter), date: moment().format('L')} );
-  complimentCounter++;
-});
+// for word stuff
+var randomFromArray = function(array) {
+  return array[Math.floor(Math.random() * array.length)];
+}
 
-//serve the route
-app.use(express.static('styles'));
-app.listen(3000, function() { 
-  console.log('complimentron is running');
-});
+var getLines = function(ctx, text, maxWidth) {
+    var words = text.split(" ");
+    var lines = [];
+    var currentLine = words[0];
 
-var printCompliment = function() {
+    for (var i = 1; i < words.length; i++) {
+        var word = words[i];
+        var width = ctx.measureText(currentLine + " " + word).width;
+        if (width < maxWidth) {
+            currentLine += " " + word;
+        } else {
+            lines.push(currentLine);
+            currentLine = word;
+        }
+    }
+    lines.push(currentLine);
+    return lines;
+}
 
-  var blinkLed = setInterval( function() {
-    led.writeSync(led.readSync() === 0 ? 1 : 0)
-  }, 200);
+//generate the compliment list
+var weightedComplimentList = [];
+generateWeightedComplimentList();
 
-  //this timer to be replaced with a physical button trigger
-    webshot('http://localhost:3000', 'compliment.png', webshotOptions, function(err) {
+var printCompliment = function(callback) { //how to do multithreading and/or a callback for blinky
 
-      Jimp.read('compliment.png', function (err, image) {
+  console.time('canvas');
+  ctx.font = '20px Chicago';
+  ctx.fillText('Compliment no. ' + padWithZeros(complimentCounter), 12, 44);
+  ctx.fillText('This compliment was printed just for you by', 12, 696);
+  ctx.fillText('Complimentron v1.01.', 12, 719);
+  ctx.fillText('Thank you for being complimented.', 12, 756);
+  ctx.fillRect(9,67,567,6);
+  ctx.fillRect(9,654,567,2);
 
-        image.brightness(0.4).contrast(1).resize(335*1.75,440*1.75)
-        .write('compliment.png', function(){
+  ctx.textAlign = 'right';
+  ctx.fillText(moment().format('L'), 586-12, 44);
 
-          getPixels('compliment.png', function (err, pixels) {
-            if (err) throw err;
-            printer
-              .raster(escpos.image(pixels))
-              .cut()
-              .flush();
-              
-              clearInterval(blinkLed);             
-              led.writeSync(1);
-          });
-        });
-      });
+  ctx.font = '51px Chicago';
+  ctx.textAlign = 'left';
+  var lines = getLines( ctx, createCompliment(), 565)
+  for (var i = 0; i < lines.length; i++) {
+    ctx.fillText(lines[i], 12, 136+(55*i) );
+  };
+  console.timeEnd('canvas');
+
+  console.time('convert');
+  canvas.toDataURL('image/png', function(err, png){
+    getPixels(png, function (err, pixels) {
+      if (err) throw err;
+      console.timeEnd('convert');
+      console.time('printy');
+
+      printer
+        .raster(escpos.image(pixels))
+        .cut()
+        .flush();
+        
+      ctx.clearRect(0,0,586, 770);
+      complimentCounter++;
+      callback();
+      console.timeEnd('printy');
     });
+  });
 };
 
-var allowedToPrint = true;
+
 button.watch(function(err, value) {
   if (allowedToPrint) {
-    console.log('printing??');
-    printCompliment();
     allowedToPrint = false; 
-    setTimeout( function() { allowedToPrint = true; }, 5000);
+
+    var blinkLed = setInterval( function() {
+      led.writeSync(led.readSync() === 0 ? 1 : 0)
+    }, 200);
+    // console.time('print');
+
+    printCompliment( function() {
+      clearInterval(blinkLed);  
+      led.writeSync(1);
+    });
+
+    // console.timeEnd('print');
+    setTimeout(function() {
+      allowedToPrint = true; 
+    },1000);
   }
 });
 
-
+//-------------------------------------//
 
 function exit() {
   led.writeSync(0);
