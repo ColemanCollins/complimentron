@@ -9,10 +9,15 @@
   "author": "Coleman Collins",
   "license": "ISC",
   "dependencies": {
+    "escposify": "^0.1.4",
     "express": "^4.13.4",
     "express-dot-engine": "^1.0.7",
+    "jimp": "^0.2.21",
     "moment": "^2.11.1",
     "sentencer": "^0.1.5",
     "webshot": "^0.17.0"
+  },
+  "devDependencies": {
+    "get-pixels": "^3.2.3"
   }
 }

@@ -1,7 +1,18 @@
 body {
   background: #fff;
   margin: 0;
-  font-family: 'Chicago'; /*remember to actually import the fonts*/
+  font-family: 'Chicago-go'; 
+  -webkit-font-smoothing: antialiased;
+}
+
+@font-face {
+    font-family: 'Chicago-go'; 
+    src: url('chicago.eot');
+    src: url('chicago.woff') format('woff'), 
+    url('chicago.ttf')  format('truetype');
+    font-weight: normal;
+    font-style: normal;
+  }
 }
 
 .receipt-wrapper {
@@ -19,7 +30,6 @@ body {
   border-bottom: 7px solid #000;
   text-align: right;
   overflow: auto;
-  -webkit-font-smoothing: none !important;
 }
 
 .count {
@@ -38,6 +48,7 @@ body {
   margin-top: 24px;
   font-size: 58px;
   line-height: 64px;
+  font-weight: 400;
 }
 
 .footer {
