@@ -6,4 +6,5 @@ This is the repo that contains the software that makes complimentron run. It's o
 You can see complimentron make compliments from the list into your terminal by running `npm install` and then `node preview.js` 
 
 ### Here's a video of the complimentron in action
-<iframe width="420" height="315" src="https://www.youtube.com/embed/FU_1IH0LfR0" frameborder="0" allowfullscreen></iframe>
+<iframe width="420" height="315" src="https://www.youtube.com/embed/" frameborder="0" allowfullscreen></iframe>
+[![Complimentron in action](http://img.youtube.com/vi/FU_1IH0LfR0/0.jpg)](http://www.youtube.com/watch?v=FU_1IH0LfR0 "Jenelle uses the Complimentron")
